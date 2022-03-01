@@ -399,7 +399,7 @@ if __name__ == '__main__':
     
     ### Session 2? Add session1
     add_sess1 = True
-    wd = '../'
+    wd = '../Data/'
     path = 'P2 STGP.csv'
     
     if add_sess1:
