@@ -3,3 +3,6 @@ numpy
 datetime
 dash
 plotly
+gunicorn
+django
+django-heroku
