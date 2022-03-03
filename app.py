@@ -17,6 +17,40 @@ import logging
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
 
+#HYPERPARAMS
+CUTOFF_PROB = 0.79
+LAP_FILTER = 65 #seconds
+###
+
+
+### Session 2? Add session1
+add_sess1 = True
+wd = '../'
+path = 'P2 STGP.csv'
+
+
+#TIME & SCORE IP
+ip = "indycar.livetiming.net"
+port = 50005
+
+
+#Set time stamps
+
+default_time = datetime(1970, 1, 1, 0, 0, 0) 
+dateFromCurrentTime = datetime.fromtimestamp(0)
+time_diff = default_time - dateFromCurrentTime
+time_diff_s = time_diff.total_seconds()
+#time_format = "%A, %B %d, %Y %I:%M:%S"
+time_format = "%I:%M:%S"
+
+#Variables to save
+columns = ['Lap', 'LapTime', 'TimeOfDay']
+lap_stint = []  
+TYRE_DEG = {}
+TYRE_DEG_DFS = {} 
+
+
+
 
 class ICReceiver:
     """
@@ -66,11 +100,11 @@ class ICReceiver:
     
 ### Session 2? Add session1
 
-def load_sess1(file, LAP_FILTER):
+def load_sess1(wd, file, LAP_FILTER):
 
     lap_times = {}
 
-    df1 = pd.read_csv(file)  
+    df1 = pd.read_csv(wd+file)  
     drivers = np.unique(df1['Car'])
 
     practice_df = df1[['Car', 'LapTime', 'Lap', 'TOD']]
@@ -220,9 +254,9 @@ def run_estimation(new_df, last_lap_stint_happ, minLapTime, stint_adjusted, last
                     last_lap_stint_happ = 0
 
         i+=1
-
-
-
+        
+        
+        
 #DASH APP STRUCTURE
 
 
@@ -333,8 +367,7 @@ def read_data_socket():
 
 def dashboard():
     #print('RUNNING DASH')
-    app = dash.Dash(__name__)
-    server = app.server
+    
     app.layout = html.Div([
         dcc.Graph(id = 'live-graph', animate = False),
         dcc.Interval(id = 'graph-update', interval = 30000, n_intervals=0)
@@ -387,53 +420,32 @@ def dashboard():
         return fig
 
     app.run_server(debug=False) 
-   
     
+    
+    
+#INITIATE CONNECTION
+
+#t1 = threading.Thread(target=read_data_socket)
+#t2 = threading.Thread(target=dashboard)
+#t1.start()
+#print('Read data thread started')
+#t2.start()
+
+if add_sess1:
+    lap_times = load_sess1(wd, path, LAP_FILTER)
+else:
+    lap_times = {}
+    
+    
+app = dash.Dash(__name__)
+server = app.server
+
+def execute_this():
+    threading.Thread(target=read_data_socket).start()
+
+def start_app():
+    threading.Thread(target=dashboard).start()
+
 if __name__ == '__main__': 
-        
-        
-    #HYPERPARAMS
-    CUTOFF_PROB = 0.79
-    LAP_FILTER = 65 #seconds
-    ###
-    
-    
-    ### Session 2? Add session1
-    add_sess1 = True
-    #wd = '../Data/'
-    path = 'P2 STGP.csv'
-    
-    if add_sess1:
-        lap_times = load_sess1(path, LAP_FILTER)
-    else:
-        lap_times = {}
-        
-    
-    #TIME & SCORE IP
-    ip = "indycar.livetiming.net"
-    port = 50005
-
-
-    #Set time stamps
-
-    default_time = datetime(1970, 1, 1, 0, 0, 0) 
-    dateFromCurrentTime = datetime.fromtimestamp(0)
-    time_diff = default_time - dateFromCurrentTime
-    time_diff_s = time_diff.total_seconds()
-    #time_format = "%A, %B %d, %Y %I:%M:%S"
-    time_format = "%I:%M:%S"
-
-    #Variables to save
-    columns = ['Lap', 'LapTime', 'TimeOfDay']
-    lap_stint = []  
-    TYRE_DEG = {}
-    TYRE_DEG_DFS = {} 
-
-
-    #INITIATE CONNECTION
-    
-    t1 = threading.Thread(target=read_data_socket)
-    t2 = threading.Thread(target=dashboard)
-    t1.start()
-    #print('Read data thread started')
-    t2.start()
+    execute_this()
+    start_app()
