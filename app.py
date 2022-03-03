@@ -25,7 +25,7 @@ LAP_FILTER = 65 #seconds
 
 ### Session 2? Add session1
 add_sess1 = True
-#wd = '../'
+wd = '../'
 path = 'P2 STGP.csv'
 
 
@@ -100,11 +100,11 @@ class ICReceiver:
     
 ### Session 2? Add session1
 
-def load_sess1(file, LAP_FILTER):
+def load_sess1(wd, file, LAP_FILTER):
 
     lap_times = {}
 
-    df1 = pd.read_csv(file)  
+    df1 = pd.read_csv(wd+file)  
     drivers = np.unique(df1['Car'])
 
     practice_df = df1[['Car', 'LapTime', 'Lap', 'TOD']]
@@ -365,60 +365,10 @@ def read_data_socket():
     connection.close();       
             
 
-def dashboard(app):
+#def dashboard():
     #print('RUNNING DASH')
     
-    app.layout = html.Div([
-        dcc.Graph(id = 'live-graph', animate = False),
-        dcc.Interval(id = 'graph-update', interval = 30000, n_intervals=0)
-    ])
-
-    @app.callback(
-        Output('live-graph', 'figure'),
-        [ Input('graph-update', 'n_intervals') ]
-    )
-    
-    def update_graph_scatter(n_intervals):
-        
-        minx = 1000
-        maxx = 0
-        fig = plotly.graph_objs.Figure()
-
-        for car in list(lap_times.keys()):
-
-            if len(lap_times[car]) == 0:
-                continue
-
-            #Binarize array
-
-            arr_size = len(lap_times[car])
-            bin_laps = [' '] * arr_size
-
-            if car in list(TYRE_DEG.keys()):
-                if len(TYRE_DEG[car]) > 0:
-                    for z in TYRE_DEG[car]:
-                        for i in range(0, arr_size):
-                            if z == lap_times[car][i][0]:
-                                bin_laps[i] = str(car) + lap_times[car][i][2]
-
-            X = []
-            Y = []
-            
-            for i in range(0, len(lap_times[car])):
-                X.append(lap_times[car][i][0])
-                Y.append(lap_times[car][i][1])
-                if lap_times[car][i][0] < minx:
-                    minx = lap_times[car][i][0]
-                if lap_times[car][i][0] > maxx:
-                    maxx = lap_times[car][i][0]
-
-            plot = plotly.graph_objs.Scatter(x=X, y=Y, name=str(car), 
-                                             mode= 'lines+text', text=bin_laps, textposition="bottom center")
-            fig.add_trace(plot)
-
-        fig.update_layout(xaxis = dict(range=[minx, maxx]), xaxis_rangeslider_visible=True)    
-        return fig
-    
+    #return app
     
     
 #INITIATE CONNECTION
@@ -430,7 +380,7 @@ def dashboard(app):
 #t2.start()
 
 if add_sess1:
-    lap_times = load_sess1(path, LAP_FILTER)
+    lap_times = load_sess1(wd, path, LAP_FILTER)
 else:
     lap_times = {}
     
@@ -438,13 +388,63 @@ else:
 app = dash.Dash(__name__)
 server = app.server
 
+app.layout = html.Div([
+    dcc.Graph(id = 'live-graph', animate = False),
+    dcc.Interval(id = 'graph-update', interval = 30000, n_intervals=0)
+])
+
+@app.callback(
+    Output('live-graph', 'figure'),
+    [ Input('graph-update', 'n_intervals') ]
+)
+
+def update_graph_scatter(n_intervals):
+
+    minx = 1000
+    maxx = 0
+    fig = plotly.graph_objs.Figure()
+
+    for car in list(lap_times.keys()):
+
+        if len(lap_times[car]) == 0:
+            continue
+
+        #Binarize array
+
+        arr_size = len(lap_times[car])
+        bin_laps = [' '] * arr_size
+
+        if car in list(TYRE_DEG.keys()):
+            if len(TYRE_DEG[car]) > 0:
+                for z in TYRE_DEG[car]:
+                    for i in range(0, arr_size):
+                        if z == lap_times[car][i][0]:
+                            bin_laps[i] = str(car) + lap_times[car][i][2]
+
+        X = []
+        Y = []
+
+        for i in range(0, len(lap_times[car])):
+            X.append(lap_times[car][i][0])
+            Y.append(lap_times[car][i][1])
+            if lap_times[car][i][0] < minx:
+                minx = lap_times[car][i][0]
+            if lap_times[car][i][0] > maxx:
+                maxx = lap_times[car][i][0]
+
+        plot = plotly.graph_objs.Scatter(x=X, y=Y, name=str(car), 
+                                         mode= 'lines+text', text=bin_laps, textposition="bottom center")
+        fig.add_trace(plot)
+
+    fig.update_layout(xaxis = dict(range=[minx, maxx]), xaxis_rangeslider_visible=True)    
+    return fig
+
 def execute_this():
     threading.Thread(target=read_data_socket).start()
 
-def start_app(app):
-    threading.Thread(target=dashboard(app)).start()
+def start_app():
+    threading.Thread(target=app.run_server(debug=False)).start()
 
 if __name__ == '__main__': 
     execute_this()
-    start_app(app)
-    app.run_server(debug=False) 
+    start_app()
