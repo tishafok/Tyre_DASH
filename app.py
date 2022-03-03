@@ -365,7 +365,7 @@ def read_data_socket():
     connection.close();       
             
 
-def dashboard():
+def dashboard(app):
     #print('RUNNING DASH')
     
     app.layout = html.Div([
@@ -443,9 +443,9 @@ server = app.server
 def execute_this():
     threading.Thread(target=read_data_socket).start()
 
-def start_app():
-    threading.Thread(target=dashboard).start()
+def start_app(app):
+    threading.Thread(target=dashboard(app)).start()
 
 if __name__ == '__main__': 
     execute_this()
-    start_app()
+    start_app(app)
