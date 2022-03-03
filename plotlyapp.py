@@ -334,6 +334,7 @@ def read_data_socket():
 def dashboard():
     #print('RUNNING DASH')
     app = dash.Dash(__name__)
+    server = app.server
     app.layout = html.Div([
         dcc.Graph(id = 'live-graph', animate = False),
         dcc.Interval(id = 'graph-update', interval = 30000, n_intervals=0)
