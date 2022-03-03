@@ -25,7 +25,7 @@ LAP_FILTER = 65 #seconds
 
 ### Session 2? Add session1
 add_sess1 = True
-wd = '../'
+#wd = '../'
 path = 'P2 STGP.csv'
 
 
@@ -100,11 +100,11 @@ class ICReceiver:
     
 ### Session 2? Add session1
 
-def load_sess1(wd, file, LAP_FILTER):
+def load_sess1(file, LAP_FILTER):
 
     lap_times = {}
 
-    df1 = pd.read_csv(wd+file)  
+    df1 = pd.read_csv(file)  
     drivers = np.unique(df1['Car'])
 
     practice_df = df1[['Car', 'LapTime', 'Lap', 'TOD']]
@@ -380,7 +380,7 @@ def read_data_socket():
 #t2.start()
 
 if add_sess1:
-    lap_times = load_sess1(wd, path, LAP_FILTER)
+    lap_times = load_sess1(path, LAP_FILTER)
 else:
     lap_times = {}
     
