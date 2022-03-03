@@ -418,8 +418,6 @@ def dashboard(app):
 
         fig.update_layout(xaxis = dict(range=[minx, maxx]), xaxis_rangeslider_visible=True)    
         return fig
-
-    app.run_server(debug=False) 
     
     
     
@@ -449,3 +447,4 @@ def start_app(app):
 if __name__ == '__main__': 
     execute_this()
     start_app(app)
+    app.run_server(debug=False) 
