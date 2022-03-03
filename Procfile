@@ -1,1 +1,1 @@
-web: gunicorn tyre-dash.wsgi
+web: gunicorn plotlyapp:server
