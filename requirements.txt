@@ -6,3 +6,4 @@ plotly
 gunicorn
 django
 django-heroku
+statsmodels
