@@ -436,6 +436,7 @@ def run_tyre_dag():
                 DAG_dict[car] = 0
         if mean_DAG:    
             DAG = np.mean(np.array(mean_DAG))
+        print('Curr DAG {}'.format(DAG))
         time.sleep(20)
             
 
