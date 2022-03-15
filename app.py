@@ -435,7 +435,7 @@ def run_tyre_dag():
             else:
                 DAG_dict[car] = 0
         if mean_DAG:    
-            DAG = np.mean(np.array(mean_DAG)))
+            DAG = np.mean(np.array(mean_DAG))
         time.sleep(20)
             
 
@@ -507,7 +507,7 @@ def update_DAG_table(n_intervals):
     df['DAG'] = degs
     if DAG_dict:
         for i in DAG_dict:
-            if DAG_dict[i]>0:
+            if DAG_dict[i]:
                 df.loc[df.Cars==i, 'DAG'] = round(DAG_dict[i],3)
     if DAG:            
         mean_DAG = round(DAG, 3)
