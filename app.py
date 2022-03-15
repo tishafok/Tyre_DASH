@@ -420,7 +420,7 @@ def read_data_socket():
     
 def run_tyre_dag():
     while True:
-        mean_DAG = []
+        DAGs = []
         for car in drivers:
             model = fit(params, car, lap_times)
 
@@ -428,15 +428,13 @@ def run_tyre_dag():
             if model.DAG:
                 car_DAG = []
                 for i in model.DAG:
+                    DAGs.append(i)
                     car_DAG.append(i)
 
                 DAG_dict[car] = np.mean(np.array(car_DAG))
-                mean_DAG.append(np.mean(np.array(car_DAG)))
-            else:
-                DAG_dict[car] = 0
-        if mean_DAG:    
-            DAG = np.mean(np.array(mean_DAG))
-        print('Curr DAG {}'.format(DAG))
+
+        if DAGs:    
+            DAG = DAGs
         time.sleep(20)
             
 
@@ -445,7 +443,7 @@ LAP_FILTER = 30 #seconds
 MAX_LAPS = 50 #information from Engineering meeting
 CUTOFF_PROB = 0.8
 ###
-DAG = 0
+DAG = []
 DAG_dict = {}
 TYRE_STINTS = {}
 
@@ -511,10 +509,10 @@ def update_DAG_table(n_intervals):
             if DAG_dict[i]:
                 df.loc[df.Cars==i, 'DAG'] = round(DAG_dict[i],3)
     if DAG:            
-        mean_DAG = round(DAG, 3)
+        mean_DAG = round(np.mean(np.array(DAG)), 3)
     else:
         mean_DAG = 0
-    mean_DAG +=1
+
     return df.to_dict('records'), mean_DAG
 
 @app.callback(
