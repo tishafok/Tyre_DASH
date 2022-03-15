@@ -514,7 +514,7 @@ def update_DAG_table(n_intervals):
         mean_DAG = round(DAG, 3)
     else:
         mean_DAG = 0
-
+    mean_DAG +=1
     return df.to_dict('records'), mean_DAG
 
 @app.callback(
