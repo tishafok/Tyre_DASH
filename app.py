@@ -19,6 +19,36 @@ import threading
 import logging 
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
+def load_filter_TimeCard(file):
+
+    lap_times = {}
+
+    df1 = pd.read_csv(file)  
+    drivers = np.unique(df1['Car'])
+
+    practice_df = df1[['Car', 'Status', 'LapTime', 'Lap', 'TOD']]
+    practice_df.Status.values[practice_df.Status =='P'] = 1
+    practice_df.Status.values[practice_df.Status !=1] = 0
+    practice_df = practice_df[practice_df.LapTime < LAP_FILTER]
+    
+    max_laps = max(practice_df.Lap)
+
+    for car in drivers:
+        lap_times[car] = []
+        dr_df = practice_df[practice_df.Car == car]
+        lap_t = dr_df.LapTime.values[0]
+        lap_l = dr_df.Lap.values[0]
+        lap_tod = dr_df.TOD.values[0]
+        lap_pit = dr_df.Status.values[0]
+        lap_times[car].append([lap_l, lap_t, lap_pit, lap_tod])
+        for i in range(1, len(dr_df)):
+            lap_t = dr_df.LapTime.values[i]
+            lap_l = dr_df.Lap.values[i]
+            lap_tod = dr_df.TOD.values[i]
+            lap_pit = dr_df.Status.values[i]
+            lap_times[car].append([lap_l, lap_t, lap_pit, lap_tod])
+    return drivers, lap_times, practice_df
+
 
 
 class Tyre_P:
