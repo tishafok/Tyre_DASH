@@ -19,6 +19,8 @@ import threading
 import logging 
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
+
+
 def load_filter_TimeCard(file):
 
     lap_times = {}
@@ -72,7 +74,7 @@ class Tyre_P:
         #Last Stint Lap (LPL)
         self.LSL = 0
         self.LSL_idx = []
-        
+        self.stints_num = 0
         self.stint_laps = []
         self.stint_info = []
         self.trend_comp = {}
@@ -156,6 +158,7 @@ class Tyre_P:
             time_stamp = self.new_df.TimeOfDay.values[i]
             self.stint_info.append([self.LSL, time_stamp])
             self.stint_laps.append(self.LSL)
+            self.stints_num = len(self.stint_laps)
     
     def break_trends(self, break_point):
         trend1 = self.new_df[:break_point]
@@ -203,7 +206,7 @@ class Tyre_P:
 
     
     def post_hoc(self, car):
-        self.stints_num = len(self.stint_laps)
+        
         if self.stints_num ==1:
             self.trend_decomp(stint_idx=0)
         if self.stints_num ==2:
@@ -219,13 +222,13 @@ class Tyre_P:
             
             
     def plot_stints(self, car):  
-        stints_num = len(self.stint_laps)
+        
         #Plot DAG        
         timing_df = self.new_df[['Lap', 'LapTime']]
         fig1 = px.line(timing_df, x="Lap", y="LapTime") 
         fig_data = fig1.data
         
-        if stints_num>0:
+        if self.stints_num>0:
             for i in range(0, self.stints_num):
                 trend1, trend2 = self.break_trends(self.adj_breakline[i])
                 fig1 = px.scatter(trend1, x="Lap", y="LapTime", trendline="ols")
@@ -235,7 +238,7 @@ class Tyre_P:
             
         fig_f = go.Figure(data=(fig_data))
         
-        if stints_num>0:
+        if self.stints_num>0:
             for i in range(0, self.stints_num):
                 x0b = self.new_df.Lap.values[self.adj_breakline[i]]
                 x1b = self.new_df.Lap.values[self.LSL_idx[i]]
@@ -260,15 +263,14 @@ class Tyre_P:
     
     
     def get_DAG(self):
-        stints_num = len(self.stint_laps)
         
-        if stints_num==0:
+        if self.stints_num==0:
             coeff, intercept = np.polyfit(self.new_df.index.values, self.new_df.LapTime.values,1)
             if coeff>0:
                 self.DAG.append(coeff)
             
-        if stints_num>0:
-            for i in range(0, stints_num):
+        if self.stints_num>0:
+            for i in range(0, self.stints_num):
                 trend1, trend2 = self.break_trends(self.adj_breakline[i])
                 coeffb, interceptb = np.polyfit(trend1.index.values, trend1.LapTime.values,1)
                 coeffa, intercepta = np.polyfit(trend2.index.values, trend2.LapTime.values,1)
@@ -277,6 +279,10 @@ class Tyre_P:
                     self.DAG.append(coeffb)
                 if coeffa>0:
                     self.DAG.append(coeffa)
+        if self.DAG:
+            self.DAG = np.mean(np.array(self.DAG))
+        else:
+            self.DAG = 0
             
     
 def fit(params, car, lap_times):
@@ -291,9 +297,10 @@ def fit(params, car, lap_times):
         model.fastest_lap(i, params)
         model.combine_probs(i)
         model.evaluate(i, params)
+        
     
     #Evaluation complete, perform post-hoc
-    if len(model.stint_laps)>0:
+    if model.stints_num>0:
         model.post_hoc(car)
     
     model.get_DAG()
@@ -419,44 +426,37 @@ def read_data_socket():
     
     
 def run_tyre_dag():
+    
     while True:
         DAGs = []
         for car in drivers:
             model = fit(params, car, lap_times)
-
             TYRE_STINTS[car] = model.stint_info
-            if model.DAG:
-                car_DAG = []
-                for i in model.DAG:
-                    DAGs.append(i)
-                    car_DAG.append(i)
-
-                DAG_dict[car] = np.mean(np.array(car_DAG))
-
-        if DAGs:    
-            DAG = DAGs
+            DAG_dict[car] = model.DAG
         time.sleep(20)
+        
             
+
 
 #HYPERPARAMS
 LAP_FILTER = 30 #seconds
 MAX_LAPS = 50 #information from Engineering meeting
 CUTOFF_PROB = 0.8
 ###
-DAG = []
+
 DAG_dict = {}
 TYRE_STINTS = {}
 
 params = {'w_Lap1out': 1.5, 'w_Lap2out': 1.25, 'minLapTime':LAP_FILTER, 'maxL':MAX_LAPS, 'prob':CUTOFF_PROB,
          'adjAfterLaps':10, 'minLapW':2.0, 'firstMinLap':12}
-  
+
 load_old_df = True
 if load_old_df:    
     file = '210502TEXR P1 Time Card.csv'
     drivers, lap_times, practice_df = load_filter_TimeCard(file)
 else:
     lap_times = {}
-    
+
 drivers_dict = []
 for car in drivers:
     car_dict = {'label': 'Car '+str(car), 'value': car}
@@ -465,9 +465,8 @@ for car in drivers:
 #TIME & SCORE IP
 ip = "indycar.livetiming.net"
 port = 50005
+        
 
-    
-#DASH INIT & LAYOUT    
 app = dash.Dash(__name__)
 server = app.server
 
@@ -504,16 +503,15 @@ def update_DAG_table(n_intervals):
     degs = np.zeros(len(drivers))
     df = pd.DataFrame(drivers, columns=['Cars'])
     df['DAG'] = degs
+    DAGs = []
     if DAG_dict:
         for i in DAG_dict:
             if DAG_dict[i]:
                 df.loc[df.Cars==i, 'DAG'] = round(DAG_dict[i],3)
-    if DAG:            
-        mean_DAG = round(np.mean(np.array(DAG)), 3)
-    else:
-        mean_DAG = 0
-
-    return df.to_dict('records'), mean_DAG
+                if DAG_dict[i] >0:
+                    DAGs.append(DAG_dict[i])
+    mean_DAG = np.mean(np.array(DAGs))
+    return df.to_dict('records'), round(mean_DAG, 3)
 
 @app.callback(
     Output('DAG-graph', 'figure'),
@@ -585,6 +583,7 @@ def start_app():
     threading.Thread(target=app.run_server(debug=False)).start()
 
 if __name__ == '__main__': 
+
     execute_socket()
     rus_estimation()
     start_app()
