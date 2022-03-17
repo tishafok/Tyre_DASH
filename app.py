@@ -425,15 +425,15 @@ def read_data_socket():
     connection.close();       
     
     
-def run_tyre_dag():
+#def run_tyre_dag():
     
-    while True:
-        DAGs = []
-        for car in drivers:
-            model = fit(params, car, lap_times)
-            TYRE_STINTS[car] = model.stint_info
-            DAG_dict[car] = model.DAG
-        time.sleep(20)
+    #while True:
+        #DAGs = []
+        #for car in drivers:
+            #model = fit(params, car, lap_times)
+            #TYRE_STINTS[car] = model.stint_info
+            #DAG_dict[car] = model.DAG
+        #time.sleep(20)
         
             
 
@@ -504,12 +504,13 @@ def update_DAG_table(n_intervals):
     df = pd.DataFrame(drivers, columns=['Cars'])
     df['DAG'] = degs
     DAGs = []
-    if DAG_dict:
-        for i in DAG_dict:
-            if DAG_dict[i]:
-                df.loc[df.Cars==i, 'DAG'] = round(DAG_dict[i],3)
-                if DAG_dict[i] >0:
-                    DAGs.append(DAG_dict[i])
+    
+    for car in drivers:
+        model = fit(params, car, lap_times)
+        if model.DAG>0:
+            DAGs.append(model.DAG)
+            df.loc[df.Cars==car, 'DAG'] = round(model.DAG,3)
+
     mean_DAG = np.mean(np.array(DAGs))
     return df.to_dict('records'), round(mean_DAG, 3)
 
@@ -576,8 +577,8 @@ def update_graph_scatter(n_intervals):
 def execute_socket():
     threading.Thread(target=read_data_socket).start()
     
-def rus_estimation():
-    threading.Thread(target=run_tyre_dag).start()
+#def rus_estimation():
+    #threading.Thread(target=run_tyre_dag).start()
 
 def start_app():
     threading.Thread(target=app.run_server(debug=False)).start()
@@ -585,5 +586,5 @@ def start_app():
 if __name__ == '__main__': 
 
     execute_socket()
-    rus_estimation()
+    #rus_estimation()
     start_app()
