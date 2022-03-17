@@ -450,7 +450,7 @@ TYRE_STINTS = {}
 params = {'w_Lap1out': 1.5, 'w_Lap2out': 1.25, 'minLapTime':LAP_FILTER, 'maxL':MAX_LAPS, 'prob':CUTOFF_PROB,
          'adjAfterLaps':10, 'minLapW':2.0, 'firstMinLap':12}
 
-load_old_df = True
+load_old_df = False
 if load_old_df:    
     file = '210502TEXR P1 Time Card.csv'
     drivers, lap_times, practice_df = load_filter_TimeCard(file)
