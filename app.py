@@ -455,6 +455,8 @@ if load_old_df:
     file = '210502TEXR P1 Time Card.csv'
     drivers, lap_times, practice_df = load_filter_TimeCard(file)
 else:
+    #TEXAS 2022 ENTRY DRIVERS
+    drivers = np.array([2,3,4,5,6,7,8,9,10,11,12,14,15,18,20,21,26,27,28,29,30,33,45,48,51,60,77])
     lap_times = {}
 
 drivers_dict = []
@@ -584,7 +586,18 @@ def start_app():
     threading.Thread(target=app.run_server(debug=False)).start()
 
 if __name__ == '__main__': 
-
+    
+    connected = False
+    connection = ICReceiver()
+    while not connected:
+        try:
+            connection.connect(ip, port)
+            connected = True
+            print( "Indycar Data is Sending" )  
+        except:
+            time.sleep(2)
+            print('No connection to Indycar yet, trying again')
+            
     execute_socket()
     #rus_estimation()
     start_app()
