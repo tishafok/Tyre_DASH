@@ -34,8 +34,8 @@ time_diff_s = time_diff.total_seconds()
 time_format = "%I:%M:%S"
 
 #HYPERPARAMS
-LAP_FILTER = 75 #seconds 30
-MAX_LAPS = 30 #information from Engineering meeting 50
+LAP_FILTER = 80 #seconds 30
+MAX_LAPS = 16 #information from Engineering meeting 50
 CUTOFF_PROB = 0.8
 ###
 
@@ -50,8 +50,8 @@ params = {'w_Lap1out': 1.5, 'w_Lap2out': 1.25, 'minLapTime':LAP_FILTER, 'maxL':M
     #file = '210502TEXR P1 Time Card.csv'
     #drivers, lap_times, practice_df = load_filter_TimeCard(file)
 
-#TEXAS 2022 ENTRY DRIVERS
-drivers = np.array([2,3,4,5,6,7,8,9,10,11,12,14,15,18,20,21,26,27,28,29,30,33,45,48,51,60,77])
+#LONG BEACH 2022 ENTRY DRIVERS
+drivers = np.array([2,3,4,5,6,7,8,9,10,11,12,14,15,18,20,21,26,27,28,29,30,45,48,51,60,77])
 
 drivers_dict = []
 for car in drivers:
@@ -394,6 +394,8 @@ class Tyre_P:
                 #print('Number of stints: {} and numner of breaklines: {}'.format(self.stints_num, len(self.adj_breakline)))
                 
                 if len(self.adj_breakline) != self.stints_num and (i+1) ==  len(self.adj_breakline):
+                    break
+                elif len(self.adj_breakline)==0:
                     break
                 else:
                     x0b = self.new_df.Lap.values[self.adj_breakline[i]]
