@@ -734,7 +734,6 @@ class DashThread(threading.Thread):
             return fig
         
         #Run server
-        server = app.server
         app.run_server(debug=False)
     
 
@@ -745,4 +744,5 @@ if __name__ == '__main__':
     b = ReadDataSocket("Time and Scoring Thread")
     
     a.start()
+    server = app.server
     b.start()
