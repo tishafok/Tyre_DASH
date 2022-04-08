@@ -21,7 +21,6 @@ logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
 #Main Dash app init
 app = dash.Dash(__name__)
-server = app.server
 
 #Main dictionary to store laptimes data
 lap_times = {}
@@ -735,6 +734,7 @@ class DashThread(threading.Thread):
             return fig
         
         #Run server
+        server = app.server
         app.run_server(debug=False)
     
 
