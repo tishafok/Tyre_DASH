@@ -613,13 +613,11 @@ class DashThread(threading.Thread):
     def run(self):
         global lap_times
         global app
-        global server
         global DAG_dict
         global TYRE_STINTS
         global drivers_dict
         global drivers
-        
-        server = app.server        
+     
         app.layout = html.Div([
             html.Center([
                 html.H1('RLL Tyre Stint & DAG Estimator', style= {'text align':'center'}),
@@ -740,10 +738,10 @@ class DashThread(threading.Thread):
     
 
 
-if __name__ == '__main__': 
+#if __name__ == '__main__': 
     
-    a = DashThread("The Dash Application")
-    b = ReadDataSocket("Time and Scoring Thread")
-    
-    a.start()
-    b.start()
+a = DashThread("The Dash Application")
+b = ReadDataSocket("Time and Scoring Thread")
+
+a.start()
+b.start()
