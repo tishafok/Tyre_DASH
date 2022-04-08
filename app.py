@@ -739,7 +739,7 @@ class DashThread(threading.Thread):
     
 
 
-    if __name__ == '__main__': 
+if __name__ == '__main__': 
     
     a = DashThread("The Dash Application")
     b = ReadDataSocket("Time and Scoring Thread")
