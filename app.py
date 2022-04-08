@@ -21,6 +21,7 @@ logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
 #Main Dash app init
 app = dash.Dash(__name__)
+server = app.server
 
 #Main dictionary to store laptimes data
 lap_times = {}
@@ -612,12 +613,13 @@ class DashThread(threading.Thread):
     def run(self):
         global lap_times
         global app
+        global server
         global DAG_dict
         global TYRE_STINTS
         global drivers_dict
         global drivers
         
-                
+        server = app.server        
         app.layout = html.Div([
             html.Center([
                 html.H1('RLL Tyre Stint & DAG Estimator', style= {'text align':'center'}),
@@ -744,5 +746,4 @@ if __name__ == '__main__':
     b = ReadDataSocket("Time and Scoring Thread")
     
     a.start()
-    server = app.server
     b.start()
