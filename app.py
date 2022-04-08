@@ -60,7 +60,7 @@ for car in drivers:
 
 #TIME & SCORE IP
 ip = "indycar.livetiming.net"
-port = 50005
+port_score = 50005
 
 
 #Set time stamps
@@ -492,10 +492,10 @@ class ICReceiver:
         else:
             self.sock = sock
 
-    def connect(self, host, port):
+    def connect(self, host, port_score):
         """Opens a connection on the current socket according to a specified host and port"""
 
-        self.sock.connect((host, port))
+        self.sock.connect((host, port_score))
         
     def close(self):
         """Closes connection"""
