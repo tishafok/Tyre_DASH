@@ -6,6 +6,7 @@ import numpy as np
 import math
 from datetime import datetime
 import time
+from collections import Counter
 
 import dash
 from dash.dependencies import Output, Input, State
@@ -414,17 +415,18 @@ class Tyre_P:
     
     
     def get_DAG(self):
-        #print('Model so far:')
-        #print('Adj Breaklines')
-        #print(self.adj_breakline)
-        #print('Proba breaklines')
-        #print(self.LSL_idx)
-        
+                  
         if self.stints_num<1:
             if len(self.new_df.LapTime.values) > 2:
+                
+                #Get DAG
                 coeff, intercept = np.polyfit(self.new_df.index.values, self.new_df.LapTime.values,1)
                 if coeff>0:
                     self.DAG.append(coeff)
+                    
+                    #Which tyre
+                    b = Counter(self.new_df['TyreType'].values)
+                    self.tyre_tp.append(b.most_common()[0][0])
 
         if self.stints_num>0:
             for i in range(0, self.stints_num):
@@ -441,17 +443,33 @@ class Tyre_P:
                     coeffb, interceptb = np.polyfit(trend1.index.values, trend1.LapTime.values,1)
                     if coeffb>0:
                         self.DAG.append(coeffb)
+                        
+                        #Which tyre
+                        b = Counter(trend1['TyreType'].values)
+                        self.tyre_tp.append(b.most_common()[0][0])
                 
                 if (i+1) == self.stints_num:
                     if len(trend2)>2:
                         coeffa, intercepta = np.polyfit(trend2.index.values, trend2.LapTime.values,1)
                         if coeffa>0:
                             self.DAG.append(coeffa)
-                
+                            
+                            #Which tyre
+                            b = Counter(trend2['TyreType'].values)
+                            self.tyre_tp.append(b.most_common()[0][0])
+        
         if self.DAG:
-            self.DAG = np.mean(np.array(self.DAG))
+            for st, tr in zip(self.tyre_tp, self.DAG):
+                if st == 'P':
+                    self.blacks_DAG.append(tr)
+                if st == 'A':
+                    self.reds_DAG.append(tr) 
+                    
+            self.blacks_DAG = np.mean(np.array(self.blacks_DAG))
+            self.reds_DAG = np.mean(np.array(self.reds_DAG))
         else:
-            self.DAG = 0
+            self.blacks_DAG = 0
+            self.reds_DAG = 0
             
     
 def fit(params, car, lap_times):
@@ -610,7 +628,8 @@ class DashThread(threading.Thread):
             html.Center([
                 html.H1('RLL Tyre Stint & DAG Estimator', style= {'text align':'center'}),
                 html.H3('Field mean DAG:'),
-                html.Div(id='glob_DAG', style=dict(color='red', fontWeight='bold', fontSize=30))
+                html.Div(id='glob_DAG_B', style=dict(color='black', fontWeight='bold', fontSize=30)),
+                html.Div(id='glob_DAG_R', style=dict(color='red', fontWeight='bold', fontSize=30))
             ]),
 
             #Add button to enter lap time cutoff
@@ -636,31 +655,42 @@ class DashThread(threading.Thread):
         ])
 
         @app.callback(
-            [Output('DAG_table', 'data'), Output('glob_DAG', 'children')],
+            [Output('DAG_table', 'data'), Output('glob_DAG_B', 'children'), Output('glob_DAG_R', 'children')],
             [ Input('table-update', 'n_intervals') ]
         )
         def update_DAG_table(n_intervals):
 
             degs = np.zeros(len(drivers))
             df = pd.DataFrame(drivers, columns=['Cars'])
-            df['DAG'] = degs
-            DAGs = []
+            df['Red DEG'] = degs
+            df['Black DEG'] = degs
+            DAGs_R = []
+            DAGs_B = []
 
             if lap_times:
                 for car in drivers:
                     if car in list(lap_times.keys()):
                         if lap_times[car]:
                             model = fit(params, car, lap_times)
-                            if model.DAG>0:
-                                DAGs.append(model.DAG)
-                                df.loc[df.Cars==car, 'DAG'] = round(model.DAG,3)
-                if DAGs:
-                    mean_DAG = np.mean(np.array(DAGs))
+                            if model.blacks_DAG>0:
+                                DAGs_B.append(model.blacks_DAG)
+                                df.loc[df.Cars==car, 'Black DEG'] = round(model.blacks_DAG,3)
+                            if model.reds_DAG>0:
+                                DAGs_R.append(model.reds_DAG)
+                                df.loc[df.Cars==car, 'Red DEG'] = round(model.reds_DAG,3)
+                if DAGs_R:
+                    mean_DAG_R = np.mean(np.array(DAGs_R))
                 else:
-                    mean_DAG = 0
+                    mean_DAG_R = 0
+                if DAGs_B:
+                    mean_DAG_B = np.mean(np.array(DAGs_B))
+                else:
+                    mean_DAG_B = 0
             else:
-                mean_DAG = 0
-            return df.to_dict('records'), round(mean_DAG, 3)
+                mean_DAG_B = 0
+                mean_DAG_R = 0
+                
+            return df.to_dict('records'), round(mean_DAG_B, 3), round(mean_DAG_R, 3)
 
         @app.callback(
             Output('DAG-graph', 'figure'),
