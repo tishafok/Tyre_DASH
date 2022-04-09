@@ -138,7 +138,11 @@ class Tyre_P:
         self.maxLTime = max(self.new_df.LapTime[self.new_df.LapTime.values < self.LapFilter])
         self.adj_breakline = []
         self.DAG = []
+        self.tyre_tp = []
         self.med_laptimes = []
+        self.blacks_DAG = []
+        self.reds_DAG = []
+        
         
     def apply_pits_w(self, params):
         
