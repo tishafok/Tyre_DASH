@@ -518,7 +518,7 @@ class ICReceiver:
 
         while len(msgs) < 2:
             msgs = []
-            buff += self.sock.recv(4096).decode('mbcs')
+            buff += self.sock.recv(4096).decode('ISO-8859-1')
             # buff = buff.decode('mbcs')
             # buff = re.sub(b'TelemStream \xc2\xa92020, Basic Telemetry Feed', b'\n', buff)
             buff = re.sub('TelemStream.+Feed', '\n', buff)
@@ -539,93 +539,58 @@ class ReadDataSocket(threading.Thread):
         
     def run(self):
 
-        global lap_times
-        global ip
-        global port_score
-        
-
-        connection = ICReceiver()
-        connection.connect(ip, port_score)
-        connected = True
-        print( "connected to server" )  
+        global connection 
 
         part = ' '
         msg = []
 
-        #file_name = 'Firestone Grand Prix of St. Petersburg-Race_R.I.log'
-        #file1 = open(file_name, 'r+')
-
-
         while True:
-            #line = file1.readline()
-            #line = line.strip()
-            #if not line:
-                #print('The Data Feed has ended')
-                #break
+            msg, part = connection.receiveAll(part)
 
-            try:
-                msg, part = connection.receiveAll(part)
+            for line in msg:
+                print(line)
+                if line.startswith('$H'):
+                    heartbeat = line.strip()
+                    h_point = re.split('¦', heartbeat)
 
-                for line in msg:
-                    if line.startswith('$H'):
-                        heartbeat = line.strip()
-                        h_point = re.split('¦', heartbeat)
+                    date_time = h_point[5]
+                    date_time = int(date_time, 16)
+                    adj_timestamp = date_time + time_diff_s
+                    time_stamp = datetime.fromtimestamp(adj_timestamp).strftime(time_format)
 
-                        date_time = h_point[5]
-                        date_time = int(date_time, 16)
-                        adj_timestamp = date_time + time_diff_s
-                        time_stamp = datetime.fromtimestamp(adj_timestamp).strftime(time_format)
+                #Get timestamp first:
+                if 'time_stamp' not in locals():
+                    continue
 
-                    #Get timestamp first:
-                    if 'time_stamp' not in locals():
-                        continue
+                #LapTimes
+                if line.startswith('$O'):
 
-                    #LapTimes
-                    if line.startswith('$O'):
-                        
-                        info = line.strip()
-                        info = re.split('¦', info)
-                        car = int(info[29])
-                        lap_num = int(info[13], 16)
-                        lap_time = int(info[12],16)/10000
-                        t_type= info[-3]
-                        if t_type == '0':
-                            t_type = 'P'
-                        if t_type == '1':
-                            t_type = 'A'
+                    info = line.strip()
+                    info = re.split('¦', info)
+                    car = int(info[29])
+                    lap_num = int(info[13], 16)
+                    lap_time = int(info[12],16)/10000
+                    t_type= info[-3]
+                    if t_type == '0':
+                        t_type = 'P'
+                    if t_type == '1':
+                        t_type = 'A'
 
-                        status = info[24]
-                        if status == '0':
-                            status = 'P'
-                        if status == '1':
-                            status = 'T'
+                    status = info[24]
+                    if status == '0':
+                        status = 'P'
+                    if status == '1':
+                        status = 'T'
 
-                        if car not in list(lap_times.keys()):
-                            lap_times[car] = []
-                        if len(lap_times[car]) == 0:
-                            if lap_time > 0 and lap_time < LAP_FILTER:
-                                lap_times[car].append([lap_num, lap_time, status, time_stamp, t_type])
-                        else:
-                            if lap_times[car][-1][1] != lap_time and lap_time > 0 and lap_time < LAP_FILTER:
-                                lap_times[car].append([lap_num, lap_time, status, time_stamp, t_type])
-
-            #time.sleep(0.001)
-
-            except socket.error:  
-                # set connection status and recreate socket  
-                connected = False  
-                connection = ICReceiver()
-                print("connection lost... reconnecting")  
-                while not connected:  
-                    # attempt to reconnect, otherwise sleep for 2 seconds  
-                    try:  
-                        connection.connect(ip, port_score) 
-                        connected = True  
-                        print("re-connection successful")  
-                    except socket.error:  
-                        time.sleep(2) 
-
-        connection.close();        
+                    if car not in list(lap_times.keys()):
+                        lap_times[car] = []
+                    if len(lap_times[car]) == 0:
+                        if lap_time > 0 and lap_time < LAP_FILTER:
+                            lap_times[car].append([lap_num, lap_time, status, time_stamp, t_type])
+                    else:
+                        if lap_times[car][-1][1] != lap_time and lap_time > 0 and lap_time < LAP_FILTER:
+                            lap_times[car].append([lap_num, lap_time, status, time_stamp, t_type])
+   
 
     
 class DashThread(threading.Thread):
@@ -765,17 +730,10 @@ class DashThread(threading.Thread):
     
 a = DashThread("The Dash Application")
 
-connected = False
 connection = ICReceiver()
-while not connected:
-    try:
-        connection.connect(ip, port_score)
-        connected = True
-        print( "Indycar Data is Sending" )
-        connection.close()  
-    except:
-        time.sleep(2)
-        print('No connection to Indycar yet, trying again')
+connection.connect(ip, port_score)
+connected = True
+print( "connected to server" ) 
             
 b = ReadDataSocket("Time and Scoring Thread")
 
