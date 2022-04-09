@@ -722,7 +722,7 @@ class DashThread(threading.Thread):
             return fig
         
         #Run server
-        app.run_server(debug=False)
+        #app.run_server(debug=False)
     
 
 
