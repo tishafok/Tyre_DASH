@@ -548,7 +548,7 @@ class ReadDataSocket(threading.Thread):
             msg, part = connection.receiveAll(part)
 
             for line in msg:
-                print(line)
+                #print(line)
                 if line.startswith('$H'):
                     heartbeat = line.strip()
                     h_point = re.split('¦', heartbeat)
