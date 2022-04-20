@@ -35,8 +35,9 @@ time_diff_s = time_diff.total_seconds()
 time_format = "%I:%M:%S"
 
 #HYPERPARAMS
-LAP_FILTER = 80 #seconds 30
-MAX_LAPS = 16 #information from Engineering meeting 50
+LAP_FILTER = 45 #seconds 30
+MIN_LAP_FILTER = 30
+MAX_LAPS = 30 #information from Engineering meeting 50
 CUTOFF_PROB = 0.8
 ###
 
@@ -51,8 +52,8 @@ params = {'w_Lap1out': 1.5, 'w_Lap2out': 1.25, 'minLapTime':LAP_FILTER, 'maxL':M
     #file = '210502TEXR P1 Time Card.csv'
     #drivers, lap_times, practice_df = load_filter_TimeCard(file)
 
-#LONG BEACH 2022 ENTRY DRIVERS
-drivers = np.array([2,3,4,5,6,7,8,9,10,11,12,14,15,18,20,21,26,27,28,29,30,45,48,51,60,77])
+#INDT 2022 ENTRY DRIVERS
+drivers = np.array([1,2,3,4,5,6,7,8,9,10,11,12,14,15,18,20,21,23,24,26,27,28,29,30,33,45,48,51,60,66,77,98])
 
 drivers_dict = []
 for car in drivers:
@@ -607,10 +608,10 @@ class ReadDataSocket(threading.Thread):
                     if car not in list(lap_times.keys()):
                         lap_times[car] = []
                     if len(lap_times[car]) == 0:
-                        if lap_time > 0 and lap_time < LAP_FILTER:
+                        if lap_time > MIN_LAP_FILTER and lap_time < LAP_FILTER:
                             lap_times[car].append([lap_num, lap_time, status, time_stamp, t_type])
                     else:
-                        if lap_times[car][-1][1] != lap_time and lap_time > 0 and lap_time < LAP_FILTER:
+                        if lap_times[car][-1][1] != lap_time and lap_time > MIN_LAP_FILTER and lap_time < LAP_FILTER:
                             lap_times[car].append([lap_num, lap_time, status, time_stamp, t_type])
    
 
