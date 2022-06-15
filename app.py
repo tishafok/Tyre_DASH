@@ -1373,21 +1373,30 @@ class DashThread(threading.Thread):
 
 a = DashThread("The Dash Application")
 b = ReadDataSocket("Time and Scoring Thread")
-a.start()
 
+
+#a.start()
+#connection = ICReceiver()
+#try:
+    #connection.connect(ip, port_score)
+    #connected = True
+    #print( "connected to server" ) 
+    #b.start()
+#except:
+    #try:
+        #print('Trying again to connect')
+        #connection.connect(ip, port_score)
+        #connected = True
+        #print( "connected to server" ) 
+        #b.start()
+    #except:
+        #print('Tried twice, exiting')
+        #connection.close()
+         
 connection = ICReceiver()
-try:
-    connection.connect(ip, port_score)
-    connected = True
-    print( "connected to server" ) 
-    b.start()
-except:
-    try:
-        print('Trying again to connect')
-        connection.connect(ip, port_score)
-        connected = True
-        print( "connected to server" ) 
-        b.start()
-    except:
-        print('Tried twice, exiting')
-        connection.close()
+connection.connect(ip, port_score)
+connected = True
+a.start()
+b.start()
+
+print( "connected to server" ) 
